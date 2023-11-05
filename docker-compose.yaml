@@ -1,0 +1,45 @@
+# Utilise la version 3.8 de la spécification de docker-compose, qui est une version récente supportant des fonctionnalités spécifiques de Docker.
+version: '3.8'
+
+services:
+  # Définit le premier service appelé "tp3".
+  tp3:
+    build:  # Instructions pour construire l'image Docker pour ce service.
+      context: ./  # Répertoire de contexte pour la construction, ici le répertoire courant.
+      dockerfile: ./Dockerfile  # Chemin vers le Dockerfile utilisé pour construire l'image.
+    
+    expose:  # Liste des ports que ce service va exposer.
+      - '8080'  # Expose le port 8080 à l'intérieur du réseau Docker, mais pas à l'extérieur.
+    
+    deploy:  # Options de déploiement spécifiques à des environnements de production, utilisés avec Docker Swarm.
+      replicas: 4  # Demande à exécuter 4 répliques (instances) de ce service.
+    
+    restart: always  # Politique de redémarrage automatique du service en cas de défaillance.
+    environment:  # Variables d'environnement passées au conteneur.
+      - PING_LISTEN_PORT=8080  # Définit la variable d'environnement PING_LISTEN_PORT à 8080.
+    networks:  # Réseaux auxquels ce service sera connecté.
+      - front-network  # Se connecte au réseau "front-network" défini plus bas.
+  
+  # Définit le second service appelé "proxy".
+  proxy:
+    image: nginx:latest  # Utilise la dernière version de l'image Docker "nginx".
+
+    volumes:  # Montage de volumes pour ce service.
+      - ./nginx.conf:/etc/nginx/nginx.conf  # Montage de la configuration nginx locale dans le conteneur.
+    
+    ports:  # Ports que ce service va publier à l'extérieur du réseau Docker.
+      - 8080:80  # Route le trafic du port 8080 sur l'hôte au port 80 du conteneur.
+    
+    depends_on:  # Définit les dépendances, ce service démarre seulement après "tp3".
+      - tp3  # Dépend du service "tp3".
+    
+    networks:  # Réseaux auxquels ce service sera connecté.
+      - front-network  # Se connecte au réseau "front-network".
+
+# Définit les réseaux utilisés par les services dans ce fichier docker-compose.
+networks:
+  front-network:  # Définit un réseau appelé "front-network" pour la communication inter-conteneurs.
+
+# Définit les volumes utilisés par les services dans ce fichier docker-compose.
+volumes:
+  db_data:  # Déclare un volume nommé "db_data". Il n'est pas utilisé dans ce fichier mais peut être destiné à un usage futur.

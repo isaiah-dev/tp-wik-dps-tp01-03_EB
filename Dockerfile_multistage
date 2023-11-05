@@ -1,0 +1,54 @@
+# Import de node
+FROM node:18 as builder
+
+# Définition du workspace
+WORKDIR /app
+
+# Copie des packages json
+COPY package*.json ./
+
+# Installation des dépendances
+RUN npm install --production
+
+# Installation de typescript
+RUN npm install typescript --save-dev
+
+# Installtion de node
+RUN npm install @types/node --save-dev 
+
+# Initialisation du projet typescript
+RUN npx tsc --init --rootDir src --outDir build --esModuleInterop --resolveJsonModule --lib es6 --module commonjs --allowJs true --noImplicitAny true
+
+# Copie du dossier src dans le workspace
+COPY src ./src
+
+#Build le code typescript en JS 
+RUN npx tsc
+
+
+
+#   ///    Deuxième partie     ///    #
+
+
+
+# Import de node
+FROM node:18
+
+# Définition du workspace
+WORKDIR /app
+
+# Build le code
+RUN mkdir build
+
+# Le copier dans ./build
+COPY --from=builder /app/build/index.js ./build
+
+ 
+# Copie des packages json
+COPY package*.json ./
+
+ 
+RUN npm install --production
+
+# Éxecution du fichier .js
+CMD node build/index.js
